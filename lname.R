@@ -128,28 +128,30 @@ aa<-ggplot(data_summ, aes(x=x, y=delta_p_pt)) +
                 width=.4,
                 position=position_dodge(.9)) +
   xlab("") +  ylab("Vascular Reactivity [%]") + ylim(0,25)+
+#   scale_fill_manual(name="Genotype&Treatment",
+#                     values=c("olivedrab2","olivedrab4","darkorange","darkorange3"),labels=c("nTg","nTg+LNAME","Tg","Tg+LNAME"))+
   scale_fill_manual(name="Genotype&Treatment",
-                    values=c("darkolivegreen2","olivedrab4","darkorange","olivedrab3"),labels=c("nTg","nTg+LNAME","Tg","Tg+LNAME"))+
+                    values=c("olivedrab2","olivedrab4","darkorange","darkorange3"),labels=c("nTg (n=9)","nTg+LNAME (n=3)","Tg (n=7)","Tg+LNAME (n=4)"))+
   scale_x_continuous(breaks=c(sum(x.seq[1:4])/4, sum(x.seq[5:8])/4, sum(x.seq[9:12])/4, sum(x.seq[13:16])/4),
                      label=c("All Vessels","Arterioles","Capillaries","Venules"))+theme_gray()+
   theme(axis.text=element_text(size=30),
         axis.title.y=element_text(vjust=5),
         text=element_text(size=30),
-        legend.position="bottom")
+        legend.position="right")
 aa
 label1.df <- data.frame(x = c(x.seq[3],x.seq[2],x.seq[7],x.seq[6],x.seq[15],x.seq[14])-0.1,
-                        delta_p_pt = c(19.5,18.5,20.5,19.5,22.5,21.5))
-data1 <- data.frame(x = c(1,3), y = c(19.5,19.5),
+                        delta_p_pt = c(16.5,15.5,17.5,16.5,19.5,18.5))
+data1 <- data.frame(x = c(1,3), y = c(16.5,16.5),
                     type=NA, delta_pt=NA)
-data2 <- data.frame(x = c(1,2), y = c(18.5,18.5),
+data2 <- data.frame(x = c(1,2), y = c(15.5,15.5),
                     type=NA, delta_pt=NA)
-data3 <- data.frame(x = c(6.5,8.5), y = c(20.5,20.5),
+data3 <- data.frame(x = c(6.5,8.5), y = c(17.5,17.5),
                     type=NA, delta_pt=NA)
-data4 <- data.frame(x = c(6.5,7.5), y = c(19.5,19.5),
+data4 <- data.frame(x = c(6.5,7.5), y = c(16.5,16.5),
                     type=NA, delta_pt=NA)
-data5 <- data.frame(x = c(16.5,18.5), y = c(22.5,22.5),
+data5 <- data.frame(x = c(16.5,18.5), y = c(19.5,19.5),
                     type=NA, delta_pt=NA)
-data6 <- data.frame(x = c(16.5,17.5), y = c(21.5,21.5),
+data6 <- data.frame(x = c(16.5,17.5), y = c(18.5,18.5),
                     type=NA, delta_pt=NA)
 bb<-aa + geom_path(data = data1, aes(x = x, y = y),size=1)+
   geom_path(data = data2, aes(x = x, y = y),size=1)+
@@ -159,7 +161,7 @@ bb<-aa + geom_path(data = data1, aes(x = x, y = y),size=1)+
   geom_path(data = data6, aes(x = x, y = y),size=1)+
   geom_text(data=label1.df,label="*",size=13)
 bb
-dev.copy(jpeg,"LNAME/vascular_reac_LNAME.jpeg", width=1000, height=800)
+dev.copy(jpeg,"LNAME/vascular_reac_LNAME_n.jpeg", width=1000, height=800)
 dev.off()
 airdata_all_all_all <- subset(airdata_all_all,type=="All")
 wilcox.test(airdata_all_all_all[airdata_all_all_all$gntrt=="wt&ntx",]$delta_p_pt,airdata_all_all_all[airdata_all_all_all$gntrt=="wt&tx",]$delta_p_pt)
@@ -278,7 +280,19 @@ flowChange <- function (df,genotrt) {
   air_co2_slp_se <- sqrt(diag(air_co2_pca$variance))[2]                     # se for slope
   air_co2_flow_se <- air_co2_slp_se/air_co2_pca$coefficients[2]^2            # se for flow change
   air_co2_flow_change_tab = paste(round(air_co2_flow_change,digits=3)," +/- ",round(air_co2_flow_se,digits=3))
-  return(air_co2_flow_change_tab)
+  newList <- list("value" = air_co2_flow_change,"SE" = air_co2_flow_se,"tab" = air_co2_flow_change_tab)
+  return(newList)
+}
+flowChangeValue <- function (df,genotrt) {
+  air_co2 <-data.frame(df[df$gntrt==genotrt&df$state=="air",]$pt,df[df$gntrt==genotrt&df$state=="co2",]$pt)
+  colnames(air_co2) <- c("air","co2")
+  air_co2_pca <- deming(air_co2[,2]~air_co2[,1])
+  air_co2_flow_change <- 1/air_co2_pca$coefficients[2]
+  air_co2_ci_int <- (air_co2_pca$ci[2,2]-air_co2_pca$ci[2,1])/2              # ci interval for slope
+  air_co2_flow_change_ci <- air_co2_ci_int*(air_co2_flow_change)^2           # ci interval for flow change
+  air_co2_slp_se <- sqrt(diag(air_co2_pca$variance))[2]                     # se for slope
+  air_co2_flow_se <- air_co2_slp_se/air_co2_pca$coefficients[2]^2            # se for flow change
+  return(air_co2_flow_change)
 }
 sigP <- function (df,genotrt1,genotrt2) {
   air_co2_1 <-data.frame(df[df$gntrt==genotrt1&df$state=="air",]$pt,df[df$gntrt==genotrt1&df$state=="co2",]$pt)
@@ -432,336 +446,149 @@ comb <- combined_plot+
   labs(y=expression(paste(TTP[CO[2]]," centered [s]")))+labs(x=expression(paste(TTP[air]," centered [s]")))+
   guides(colour = guide_legend(override.aes = list(alpha = 1,size=3)))+theme_gray()+
   theme(axis.text=element_text(size=30),text=element_text(size=30),
-        legend.position="none")
+        legend.position="none",plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 comb
-dev.copy(jpeg,"flow_change/TTPair_VS_TTPco2_bg.jpeg", width=800, height=800)
+dev.copy(jpeg,"LNAME/TTPair_VS_TTPco2_bg.jpeg", width=800, height=800)
 dev.off()
 
 # all_regression wt ntx     NOT CENTRED
-wt_ntx_flow_change_tab = flowChange(data_matched,"wt&ntx")
+wt_ntx_flow_change = flowChangeValue(data_matched,"wt&ntx")
+wt_ntx_flow_change = flowChange(data_matched,"wt&ntx")
 # all_regression wt tx     NOT CENTRED
-wt_tx_flow_change_tab = flowChange(data_matched,"wt&tx")
+wt_tx_flow_change = flowChangeValue(data_matched,"wt&tx")
+wt_tx_flow_change = flowChange(data_matched,"wt&tx")
 # all_regression tg ntx     NOT CENTRED
-tg_ntx_flow_change_tab = flowChange(data_matched,"tg&ntx")
+tg_ntx_flow_change = flowChangeValue(data_matched,"tg&ntx")
+tg_ntx_flow_change = flowChange(data_matched,"tg&ntx")
 # all_regression tg tx     NOT CENTRED
-tg_tx_flow_change_tab = flowChange(data_matched,"tg&tx")
+tg_tx_flow_change = flowChangeValue(data_matched,"tg&tx")
+tg_tx_flow_change = flowChange(data_matched,"tg&tx")
 
+# hypothesis testing
+#Paternoster, R., Brame, R., Mazerolle, P., & Piquero, A. R. (1998). Using the Correct Statistical Test for the Equality of Regression Coefficients. Criminology, 36(4), 859???866.
 p_wtVSwtLNAME <- sigP(data_matched,"wt&ntx","wt&tx")
+p_wtVSwtLNAME
 p_wtVStg <- sigP(data_matched,"wt&ntx","tg&ntx")
+p_wtVStg
 p_tgVStgLNAME <- sigP(data_matched,"tg&ntx","tg&tx")
+p_tgVStgLNAME
 
 # art_regression wt ntx     NOT CENTRED
-wt_ntx_art_flow_change_tab = flowChange(subset(data_matched,type=="a"),"wt&ntx")
+wt_ntx_art_flow_change = flowChangeValue(subset(data_matched,type=="a"),"wt&ntx")
+wt_ntx_art_flow_change = flowChange(subset(data_matched,type=="a"),"wt&ntx")
 # art_regression wt tx     NOT CENTRED
-wt_tx_art_flow_change_tab = flowChange(subset(data_matched,type=="a"),"wt&tx")
+wt_tx_art_flow_change = flowChangeValue(subset(data_matched,type=="a"),"wt&tx")
+wt_tx_art_flow_change = flowChange(subset(data_matched,type=="a"),"wt&tx")
 # art_regression tg ntx     NOT CENTRED
-tg_ntx_art_flow_change_tab = flowChange(subset(data_matched,type=="a"),"tg&ntx")
+tg_ntx_art_flow_change = flowChangeValue(subset(data_matched,type=="a"),"tg&ntx")
+tg_ntx_art_flow_change = flowChange(subset(data_matched,type=="a"),"tg&ntx")
 # art_regression tg tx     NOT CENTRED
-tg_tx_art_flow_change_tab = flowChange(subset(data_matched,type=="a"),"tg&tx")
+tg_tx_art_flow_change = flowChangeValue(subset(data_matched,type=="a"),"tg&tx")
+tg_tx_art_flow_change = flowChange(subset(data_matched,type=="a"),"tg&tx")
+
+p_art_wtVSwtLNAME <- sigP(subset(data_matched,type=="a"),"wt&ntx","wt&tx")
+p_art_wtVSwtLNAME
+p_art_wtVStg <- sigP(subset(data_matched,type=="a"),"wt&ntx","tg&ntx")
+p_art_wtVStg
+p_art_tgVStgLNAME <- sigP(subset(data_matched,type=="a"),"tg&ntx","tg&tx")
+p_art_tgVStgLNAME
 
 # cap_regression wt ntx     NOT CENTRED
-wt_ntx_cap_flow_change_tab = flowChange(subset(data_matched,type=="c"),"wt&ntx")
+wt_ntx_cap_flow_change = flowChangeValue(subset(data_matched,type=="c"),"wt&ntx")
+wt_ntx_cap_flow_change = flowChange(subset(data_matched,type=="c"),"wt&ntx")
 # cap_regression wt tx     NOT CENTRED
-wt_tx_cap_flow_change_tab = flowChange(subset(data_matched,type=="c"),"wt&tx")
+wt_tx_cap_flow_change = flowChangeValue(subset(data_matched,type=="c"),"wt&tx")
+wt_tx_cap_flow_change = flowChange(subset(data_matched,type=="c"),"wt&tx")
 # cap_regression tg ntx     NOT CENTRED
-tg_ntx_cap_flow_change_tab = flowChange(subset(data_matched,type=="c"),"tg&ntx")
+tg_ntx_cap_flow_change = flowChangeValue(subset(data_matched,type=="c"),"tg&ntx")
+tg_ntx_cap_flow_change = flowChange(subset(data_matched,type=="c"),"tg&ntx")
 # cap_regression tg tx     NOT CENTRED
-tg_tx_cap_flow_change_tab = flowChange(subset(data_matched,type=="c"),"tg&tx")
+tg_tx_cap_flow_change = flowChangeValue(subset(data_matched,type=="c"),"tg&tx")
+tg_tx_cap_flow_change = flowChange(subset(data_matched,type=="c"),"tg&tx")
+
+p_cap_wtVSwtLNAME <- sigP(subset(data_matched,type=="c"),"wt&ntx","wt&tx")
+p_cap_wtVSwtLNAME
+p_cap_wtVStg <- sigP(subset(data_matched,type=="c"),"wt&ntx","tg&ntx")
+p_cap_wtVStg
+p_cap_tgVStgLNAME <- sigP(subset(data_matched,type=="c"),"tg&ntx","tg&tx")
+p_cap_tgVStgLNAME
 
 # ven_regression wt ntx     NOT CENTRED
-wt_ntx_ven_flow_change_tab = flowChange(subset(data_matched,type=="v"),"wt&ntx")
+wt_ntx_ven_flow_change = flowChangeValue(subset(data_matched,type=="v"),"wt&ntx")
+wt_ntx_ven_flow_change = flowChange(subset(data_matched,type=="v"),"wt&ntx")
 # ven_regression wt tx     NOT CENTRED
-wt_tx_ven_flow_change_tab = flowChange(subset(data_matched,type=="v"),"wt&tx")
+wt_tx_ven_flow_change = flowChangeValue(subset(data_matched,type=="v"),"wt&tx")
+wt_tx_ven_flow_change = flowChange(subset(data_matched,type=="v"),"wt&tx")
 # ven_regression tg ntx     NOT CENTRED
-tg_ntx_ven_flow_change_tab = flowChange(subset(data_matched,type=="v"),"tg&ntx")
+tg_ntx_ven_flow_change = flowChangeValue(subset(data_matched,type=="v"),"tg&ntx")
+tg_ntx_ven_flow_change = flowChange(subset(data_matched,type=="v"),"tg&ntx")
 # ven_regression tg tx     NOT CENTRED
-tg_tx_ven_flow_change_tab = flowChange(subset(data_matched,type=="v"),"tg&tx")
+tg_tx_ven_flow_change = flowChangeValue(subset(data_matched,type=="v"),"tg&tx")
+tg_tx_ven_flow_change = flowChange(subset(data_matched,type=="v"),"tg&tx")
 
-# hypothesis testing
-#Paternoster, R., Brame, R., Mazerolle, P., & Piquero, A. R. (1998). Using the Correct Statistical Test for the Equality of Regression Coefficients. Criminology, 36(4), 859???866.
-z_ntx_flow_change = (tg_ntx_pca$coefficient[2]-wt_ntx_pca$coefficient[2])/
-  (sqrt(tg_ntx_slp_se^2+wt_ntx_slp_se^2))
-p_ntx_flow_change=2*pnorm(-abs(z_ntx_flow_change))
-# Combined plot of all vessels of nTg and all vessels of Tg  
-combined_plot <- ggplotRegressionPCAcombined(tg_ntx_ac,wt_ntx_ac,'darkorange3','olivedrab4',5,12,5.5,12)
-combined_plot
+p_ven_wtVSwtLNAME <- sigP(subset(data_matched,type=="v"),"wt&ntx","wt&tx")
+p_ven_wtVSwtLNAME
+p_ven_wtVStg <- sigP(subset(data_matched,type=="v"),"wt&ntx","tg&ntx")
+p_ven_wtVStg
+p_ven_tgVStgLNAME <- sigP(subset(data_matched,type=="v"),"tg&ntx","tg&tx")
+p_ven_tgVStgLNAME
 
-bnd.df <- data.frame(matrix(ncol=4,nrow=11))
-colnames(rfc.df) <- c("type","gn","rfc","se")
-rfc.df[,3]<-c(wt_ntx_flow_change,tg_ntx_flow_change,wt_ntx_art_flow_change,tg_ntx_art_flow_change,
-              wt_ntx_cap_flow_change,tg_ntx_cap_flow_change,wt_ntx_ven_flow_change,tg_ntx_ven_flow_change)
-rfc.df[,4]<-c(wt_ntx_flow_se,tg_ntx_flow_se,wt_ntx_art_flow_se,tg_ntx_art_flow_se,
-              wt_ntx_cap_flow_se,tg_ntx_cap_flow_se,wt_ntx_ven_flow_se,tg_ntx_ven_flow_se)
-rfc.df[,4]<-(rfc.df[,4]/rfc.df[,3])*100     # se of % change in flow from co2 challenge
-rfc.df[,3]<-(rfc.df[,3]-1)*100              # % change in flow from co2 challenge
-rfc.df[,1] <- c("All Vessels","All Vessels","Arterioles","Arterioles",
-                "Capillaries","Capillaries","Venules","Venules")
-rfc.df[,2] <- c("nTg","Tg","nTg","Tg","nTg","Tg","nTg","Tg")
-x.seq <- c(2,4,6.5,7.5,9.5,10.5,12.5,13.5)
+wt_ntx_flow_tabs <- data.frame(c(wt_ntx_flow_change$tab,wt_ntx_art_flow_change$tab,wt_ntx_cap_flow_change$tab,wt_ntx_ven_flow_change$tab))
+wt_tx_flow_tabs <- data.frame(c(wt_tx_flow_change$tab,wt_tx_art_flow_change$tab,wt_tx_cap_flow_change$tab,wt_tx_ven_flow_change$tab))
+tg_ntx_flow_tabs <- data.frame(c(tg_ntx_flow_change$tab,tg_ntx_art_flow_change$tab,tg_ntx_cap_flow_change$tab,tg_ntx_ven_flow_change$tab))
+tg_tx_flow_tabs <- data.frame(c(tg_tx_flow_change$tab,tg_tx_art_flow_change$tab,tg_tx_cap_flow_change$tab,tg_tx_ven_flow_change$tab))
+p_values_wtVSwtLNAME <- data.frame(c(p_wtVSwtLNAME,p_art_wtVSwtLNAME,p_cap_wtVSwtLNAME,p_ven_wtVSwtLNAME))
+p_values_wtVStg <- data.frame(c(p_wtVStg,p_art_wtVStg,p_cap_wtVStg,p_ven_wtVStg))
+p_values_tgVStgLNAME <- data.frame(c(p_tgVStgLNAME,p_art_tgVStgLNAME,p_cap_tgVStgLNAME,p_ven_tgVStgLNAME))
 
-comb <- combined_plot+
-  labs(x=expression(paste(TTP[air], " (s)")), y=expression(paste(TTP[CO[2]], " (s)")))+
-  geom_abline(slope=1,intercept=0,colour="black",linetype="dashed",size=0.8)+
-  #   geom_abline(slope=0,intercept=4,colour="blue",linetype="dashed",size=0.8)+
-  geom_ribbon(aes(ymin=cl,ymax=cu),fill="darkgrey",alpha="0.5")+
-  geom_ribbon(aes(ymin=cu,ymax=cl),fill="darkgrey",alpha="0.5")+
-  #   scale_color_manual(name="Genotype",values=c("darkorange3","olivedrab4"),
-  #                     labels=c("TgAD","nTg"))+
-  guides(colour = guide_legend(override.aes = list(alpha = 1,size=3)))+theme_gray()+
-  theme(axis.text=element_text(size=30),text=element_text(size=30),
-        legend.position="top")+
-  xlim(4,13)+ylim(4,13)
-comb
-dev.copy(jpeg,"flow_change/TTPair_VS_TTPco2.jpeg", width=800, height=800)
-dev.off()
-
-# Arterioles_regression wt ntx
-airdata_wt_ntx_art_mtchd<-subset(airdata_wt_ntx_mtchd,type=="a")
-cdata_wt_ntx_art_mtchd<-subset(cdata_wt_ntx_mtchd,type=="a")
-wt_ntx_art_ac <-data.frame(airdata_wt_ntx_art_mtchd$pt,cdata_wt_ntx_art_mtchd$pt)
-colnames(wt_ntx_art_ac) <- c("air","co2")
-wt_ntx_art_pca <- deming(wt_ntx_art_ac[,2]~wt_ntx_art_ac[,1])
-wt_ntx_art_flow_change <- 1/wt_ntx_art_pca$coefficients[2]
-wt_ntx_art_ci_int <- (wt_ntx_art_pca$ci[2,2]-wt_ntx_art_pca$ci[2,1])/2
-wt_ntx_art_flow_change_ci <- wt_ntx_art_ci_int*(wt_ntx_art_flow_change)^2
-wt_ntx_art_slp_se <- sqrt(diag(wt_ntx_art_pca$variance))[2]                     # se for slope
-wt_ntx_art_flow_se <- wt_ntx_art_slp_se/wt_ntx_art_pca$coefficients[2]^2        # se for flow change
-wt_ntx_art_slp_int_se <- sqrt(diag(wt_ntx_art_pca$variance))[1]                 # se for original slope's intercept
-wt_ntx_art_flow_int_se <- wt_ntx_art_slp_int_se/wt_ntx_art_pca$coefficients[1]^2# se for flow change
-wt_ntx_art_ac$se_u <- (wt_ntx_art_pca$coefficients[2]+wt_ntx_art_slp_se)*wt_ntx_art_ac$air+wt_ntx_art_pca$coeff[1]-wt_ntx_slp_int_se
-wt_ntx_art_ac$se_l <- (wt_ntx_art_pca$coefficients[2]-wt_ntx_art_slp_se)*wt_ntx_art_ac$air+wt_ntx_art_pca$coeff[1]+wt_ntx_slp_int_se
-wt_ntx_art_ac$cu <- wt_ntx_art_pca$ci[2,2]*wt_ntx_art_ac$air+wt_ntx_art_pca$ci[1,1]
-wt_ntx_art_ac$cl <- wt_ntx_art_pca$ci[2,1]*wt_ntx_art_ac$air+wt_ntx_art_pca$ci[1,2]
-wt_ntx_art_plot <- ggplotRegressionPCA(wt_ntx_art_ac,5.5,12)
-aa <- wt_ntx_art_plot+xlim(4,12.5)+ylim(4,12.5)+
-  labs(y=expression(paste("TTP during ",CO[2]," [s]")))+labs(x="TTP during air [s]")+ggtitle("nTg - Arterioles")+
-  geom_abline(slope=1,intercept=0,colour="black",linetype="dashed")+theme_gray()+
-  theme(axis.text=element_text(size=30,colour="white"),
-        text=element_text(size=30,color="white"),
-        legend.text=element_text(size=30,color="white"),
-        plot.background = element_rect(fill = "gray27"),
-        panel.background = element_rect(fill = "gray42"),
-        legend.background = element_rect(fill = "gray27"),
-        legend.key.height=unit(2.5,"line"))
-aa
-dev.copy(jpeg,"FC_nTG_nTX_Arterioles.jpeg")
-dev.off()
-wt_ntx_art_flow_change_tab = paste(round(wt_ntx_art_flow_change,digits=3)," +/- ",round(wt_ntx_art_flow_se,digits=3))
-# Arterioles_regression tg ntx
-airdata_tg_ntx_art_mtchd<-subset(airdata_tg_ntx_mtchd,type=="a")
-cdata_tg_ntx_art_mtchd<-subset(cdata_tg_ntx_mtchd,type=="a")
-tg_ntx_art_ac <-data.frame(airdata_tg_ntx_art_mtchd$pt,cdata_tg_ntx_art_mtchd$pt)
-colnames(tg_ntx_art_ac) <- c("air","co2")
-tg_ntx_art_pca <- deming(tg_ntx_art_ac[,2]~tg_ntx_art_ac[,1])
-tg_ntx_art_flow_change <- 1/tg_ntx_art_pca$coefficients[2]
-tg_ntx_art_ci_int <- (tg_ntx_art_pca$ci[2,2]-tg_ntx_art_pca$ci[2,1])/2
-tg_ntx_art_flow_change_ci <- tg_ntx_art_ci_int*(tg_ntx_art_flow_change)^2
-tg_ntx_art_slp_se <- sqrt(diag(tg_ntx_art_pca$variance))[2]                     # se for slope
-tg_ntx_art_flow_se <- tg_ntx_art_slp_se/tg_ntx_art_pca$coefficients[2]^2        # se for flow change
-tg_ntx_art_slp_int_se <- sqrt(diag(tg_ntx_art_pca$variance))[1]                 # se for original slope's intercept
-tg_ntx_art_flow_int_se <- tg_ntx_art_slp_int_se/tg_ntx_art_pca$coefficients[1]^2# se for flow change
-tg_ntx_art_ac$se_u <- (tg_ntx_art_pca$coefficients[2]+tg_ntx_art_slp_se)*tg_ntx_art_ac$air+tg_ntx_art_pca$coeff[1]-tg_ntx_slp_int_se
-tg_ntx_art_ac$se_l <- (tg_ntx_art_pca$coefficients[2]-tg_ntx_art_slp_se)*tg_ntx_art_ac$air+tg_ntx_art_pca$coeff[1]+tg_ntx_slp_int_se
-tg_ntx_art_ac$cu <- tg_ntx_art_pca$ci[2,2]*tg_ntx_art_ac$air+tg_ntx_art_pca$ci[1,1]
-tg_ntx_art_ac$cl <- tg_ntx_art_pca$ci[2,1]*tg_ntx_art_ac$air+tg_ntx_art_pca$ci[1,2]
-tg_ntx_art_plot <- ggplotRegressionPCA(tg_ntx_art_ac,5,12)
-aa <- tg_ntx_art_plot+xlim(4,12.5)+ylim(4,12.5)+
-  labs(y=expression(paste("TTP during ",CO[2]," [s]")))+labs(x="TTP during air [s]")+ggtitle("Tg - Arterioles")+
-  geom_abline(slope=1,intercept=0,colour="black",linetype="dashed")+theme_gray()+
-  theme(axis.text=element_text(size=30,colour="white"),
-        text=element_text(size=30,color="white"),
-        legend.text=element_text(size=30,color="white"),
-        plot.background = element_rect(fill = "gray27"),
-        panel.background = element_rect(fill = "gray42"),
-        legend.background = element_rect(fill = "gray27"),
-        legend.key.height=unit(2.5,"line"))
-aa
-dev.copy(jpeg,"FC_TG_nTX_Arterioles.jpeg")
-dev.off()
-tg_ntx_art_flow_change_tab = paste(round(tg_ntx_art_flow_change,digits=3)," +/- ",round(tg_ntx_art_flow_se,digits=3))
-# hypothesis testing
-#Paternoster, R., Brame, R., Mazerolle, P., & Piquero, A. R. (1998). Using the Correct Statistical Test for the Equality of Regression Coefficients. Criminology, 36(4), 859???866.
-z_ntx_art_flow_change = (tg_ntx_art_pca$coefficient[2]-wt_ntx_art_pca$coefficient[2])/
-  (sqrt(tg_ntx_art_slp_se^2+wt_ntx_art_slp_se^2))
-p_ntx_art_flow_change=2*pnorm(-abs(z_ntx_art_flow_change))
-# Capillaries_regression wt ntx
-airdata_wt_ntx_cap_mtchd<-subset(airdata_wt_ntx_mtchd,type=="c")
-cdata_wt_ntx_cap_mtchd<-subset(cdata_wt_ntx_mtchd,type=="c")
-wt_ntx_cap_ac <-data.frame(airdata_wt_ntx_cap_mtchd$pt,cdata_wt_ntx_cap_mtchd$pt)
-colnames(wt_ntx_cap_ac) <- c("air","co2")
-wt_ntx_cap_pca <- deming(wt_ntx_cap_ac[,2]~wt_ntx_cap_ac[,1])
-wt_ntx_cap_flow_change <- 1/wt_ntx_cap_pca$coefficients[2]
-wt_ntx_cap_ci_int <- (wt_ntx_cap_pca$ci[2,2]-wt_ntx_cap_pca$ci[2,1])/2
-wt_ntx_cap_flow_change_ci <- wt_ntx_cap_ci_int*(wt_ntx_cap_flow_change)^2
-wt_ntx_cap_slp_se <- sqrt(diag(wt_ntx_cap_pca$variance))[2]                     # se for slope
-wt_ntx_cap_flow_se <- wt_ntx_cap_slp_se/wt_ntx_cap_pca$coefficients[2]^2        # se for flow change
-wt_ntx_cap_slp_int_se <- sqrt(diag(wt_ntx_cap_pca$variance))[1]                 # se for original slope's intercept
-wt_ntx_cap_flow_int_se <- wt_ntx_cap_slp_int_se/wt_ntx_cap_pca$coefficients[1]^2# se for flow change
-wt_ntx_cap_ac$se_u <- (wt_ntx_cap_pca$coefficients[2]+wt_ntx_cap_slp_se)*wt_ntx_cap_ac$air+wt_ntx_cap_pca$coeff[1]-wt_ntx_slp_int_se
-wt_ntx_cap_ac$se_l <- (wt_ntx_cap_pca$coefficients[2]-wt_ntx_cap_slp_se)*wt_ntx_cap_ac$air+wt_ntx_cap_pca$coeff[1]+wt_ntx_slp_int_se
-wt_ntx_cap_ac$cu <- wt_ntx_cap_pca$ci[2,2]*wt_ntx_cap_ac$air+wt_ntx_cap_pca$ci[1,1]
-wt_ntx_cap_ac$cl <- wt_ntx_cap_pca$ci[2,1]*wt_ntx_cap_ac$air+wt_ntx_cap_pca$ci[1,2]
-wt_ntx_cap_plot <- ggplotRegressionPCA(wt_ntx_cap_ac,5.5,12)
-aa <- wt_ntx_cap_plot+xlim(4,12.5)+ylim(4,12.5)+
-  labs(y=expression(paste("TTP during ",CO[2]," [s]")))+labs(x="TTP during air [s]")+ggtitle("nTg - Capillaries")+
-  geom_abline(slope=1,intercept=0,colour="black",linetype="dashed")+theme_gray()+
-  theme(axis.text=element_text(size=30,colour="white"),
-        text=element_text(size=30,color="white"),
-        legend.text=element_text(size=30,color="white"),
-        plot.background = element_rect(fill = "gray27"),
-        panel.background = element_rect(fill = "gray42"),
-        legend.background = element_rect(fill = "gray27"),
-        legend.key.height=unit(2.5,"line"))
-aa
-dev.copy(jpeg,"FC_nTG_nTX_Capillaries.jpeg")
-dev.off()
-wt_ntx_cap_flow_change_tab = paste(round(wt_ntx_cap_flow_change,digits=3)," +/- ",round(wt_ntx_cap_flow_se,digits=3))
-# Capillaries_regression tg ntx
-airdata_tg_ntx_cap_mtchd<-subset(airdata_tg_ntx_mtchd,type=="c")
-cdata_tg_ntx_cap_mtchd<-subset(cdata_tg_ntx_mtchd,type=="c")
-tg_ntx_cap_ac <-data.frame(airdata_tg_ntx_cap_mtchd$pt,cdata_tg_ntx_cap_mtchd$pt)
-colnames(tg_ntx_cap_ac) <- c("air","co2")
-tg_ntx_cap_pca <- deming(tg_ntx_cap_ac[,2]~tg_ntx_cap_ac[,1])
-tg_ntx_cap_flow_change <- 1/tg_ntx_cap_pca$coefficients[2]
-tg_ntx_cap_ci_int <- (tg_ntx_cap_pca$ci[2,2]-tg_ntx_cap_pca$ci[2,1])/2
-tg_ntx_cap_flow_change_ci <- tg_ntx_cap_ci_int*(tg_ntx_cap_flow_change)^2
-tg_ntx_cap_slp_se <- sqrt(diag(tg_ntx_cap_pca$variance))[2]                     # se for slope
-tg_ntx_cap_flow_se <- tg_ntx_cap_slp_se/tg_ntx_cap_pca$coefficients[2]^2        # se for flow change
-tg_ntx_cap_slp_int_se <- sqrt(diag(tg_ntx_cap_pca$variance))[1]                 # se for original slope's intercept
-tg_ntx_cap_flow_int_se <- tg_ntx_cap_slp_int_se/tg_ntx_cap_pca$coefficients[1]^2# se for flow change
-tg_ntx_cap_ac$se_u <- (tg_ntx_cap_pca$coefficients[2]+tg_ntx_cap_slp_se)*tg_ntx_cap_ac$air+tg_ntx_cap_pca$coeff[1]-tg_ntx_slp_int_se
-tg_ntx_cap_ac$se_l <- (tg_ntx_cap_pca$coefficients[2]-tg_ntx_cap_slp_se)*tg_ntx_cap_ac$air+tg_ntx_cap_pca$coeff[1]+tg_ntx_slp_int_se
-tg_ntx_cap_ac$cu <- tg_ntx_cap_pca$ci[2,2]*tg_ntx_cap_ac$air+tg_ntx_cap_pca$ci[1,1]
-tg_ntx_cap_ac$cl <- tg_ntx_cap_pca$ci[2,1]*tg_ntx_cap_ac$air+tg_ntx_cap_pca$ci[1,2]
-tg_ntx_cap_plot <- ggplotRegressionPCA(tg_ntx_cap_ac,5,12)
-aa <- tg_ntx_cap_plot+xlim(4,12.5)+ylim(4,12.5)+
-  labs(y=expression(paste("TTP during ",CO[2]," [s]")))+labs(x="TTP during air [s]")+ggtitle("Tg - Capillaries")+
-  geom_abline(slope=1,intercept=0,colour="black",linetype="dashed")+theme_gray()+
-  theme(axis.text=element_text(size=30,colour="white"),
-        text=element_text(size=30,color="white"),
-        legend.text=element_text(size=30,color="white"),
-        plot.background = element_rect(fill = "gray27"),
-        panel.background = element_rect(fill = "gray42"),
-        legend.background = element_rect(fill = "gray27"),
-        legend.key.height=unit(2.5,"line"))
-aa
-dev.copy(jpeg,"FC_TG_nTX_Capillaries.jpeg")
-dev.off()
-tg_ntx_cap_flow_change_tab = paste(round(tg_ntx_cap_flow_change,digits=3)," +/- ",round(tg_ntx_cap_flow_se,digits=3))
-# hypothesis testing
-#Paternoster, R., Brame, R., Mazerolle, P., & Piquero, A. R. (1998). Using the Correct Statistical Test for the Equality of Regression Coefficients. Criminology, 36(4), 859???866.
-z_ntx_cap_flow_change = (tg_ntx_cap_pca$coefficient[2]-wt_ntx_cap_pca$coefficient[2])/
-  (sqrt(tg_ntx_cap_slp_se^2+wt_ntx_cap_slp_se^2))
-p_ntx_cap_flow_change=2*pnorm(-abs(z_ntx_cap_flow_change))
-# Venules_regression wt ntx
-airdata_wt_ntx_ven_mtchd<-subset(airdata_wt_ntx_mtchd,type=="v")
-cdata_wt_ntx_ven_mtchd<-subset(cdata_wt_ntx_mtchd,type=="v")
-wt_ntx_ven_ac <-data.frame(airdata_wt_ntx_ven_mtchd$pt,cdata_wt_ntx_ven_mtchd$pt)
-colnames(wt_ntx_ven_ac) <- c("air","co2")
-wt_ntx_ven_pca <- deming(wt_ntx_ven_ac[,2]~wt_ntx_ven_ac[,1])
-wt_ntx_ven_flow_change <- 1/wt_ntx_ven_pca$coefficients[2]
-wt_ntx_ven_ci_int <- (wt_ntx_ven_pca$ci[2,2]-wt_ntx_ven_pca$ci[2,1])/2
-wt_ntx_ven_flow_change_ci <- wt_ntx_ven_ci_int*(wt_ntx_ven_flow_change)^2
-wt_ntx_ven_slp_se <- sqrt(diag(wt_ntx_ven_pca$variance))[2]                     # se for slope
-wt_ntx_ven_flow_se <- wt_ntx_ven_slp_se/wt_ntx_ven_pca$coefficients[2]^2        # se for flow change
-wt_ntx_ven_slp_int_se <- sqrt(diag(wt_ntx_ven_pca$variance))[1]                 # se for original slope's intercept
-wt_ntx_ven_flow_int_se <- wt_ntx_ven_slp_int_se/wt_ntx_ven_pca$coefficients[1]^2# se for flow change
-wt_ntx_ven_ac$se_u <- (wt_ntx_ven_pca$coefficients[2]+wt_ntx_ven_slp_se)*wt_ntx_ven_ac$air+wt_ntx_ven_pca$coeff[1]-wt_ntx_slp_int_se
-wt_ntx_ven_ac$se_l <- (wt_ntx_ven_pca$coefficients[2]-wt_ntx_ven_slp_se)*wt_ntx_ven_ac$air+wt_ntx_ven_pca$coeff[1]+wt_ntx_slp_int_se
-wt_ntx_ven_ac$cu <- wt_ntx_ven_pca$ci[2,2]*wt_ntx_ven_ac$air+wt_ntx_ven_pca$ci[1,1]
-wt_ntx_ven_ac$cl <- wt_ntx_ven_pca$ci[2,1]*wt_ntx_ven_ac$air+wt_ntx_ven_pca$ci[1,2]
-wt_ntx_ven_plot <- ggplotRegressionPCA(wt_ntx_ven_ac,5.5,12)
-aa <- wt_ntx_ven_plot+xlim(4,12.5)+ylim(4,12.5)+
-  labs(y=expression(paste("TTP during ",CO[2]," [s]")))+labs(x="TTP during air [s]")+ggtitle("nTg - Venules")+
-  geom_abline(slope=1,intercept=0,colour="black",linetype="dashed")+theme_gray()+
-  theme(axis.text=element_text(size=30,colour="white"),
-        text=element_text(size=30,color="white"),
-        legend.text=element_text(size=30,color="white"),
-        plot.background = element_rect(fill = "gray27"),
-        panel.background = element_rect(fill = "gray42"),
-        legend.background = element_rect(fill = "gray27"),
-        legend.key.height=unit(2.5,"line"))
-aa
-dev.copy(jpeg,"FC_nTG_nTX_Venules.jpeg")
-dev.off()
-wt_ntx_ven_flow_change_tab = paste(round(wt_ntx_ven_flow_change,digits=3)," +/- ",round(wt_ntx_ven_flow_se,digits=3))
-# Venules_regression tg ntx
-airdata_tg_ntx_ven_mtchd<-subset(airdata_tg_ntx_mtchd,type=="v")
-cdata_tg_ntx_ven_mtchd<-subset(cdata_tg_ntx_mtchd,type=="v")
-tg_ntx_ven_ac <-data.frame(airdata_tg_ntx_ven_mtchd$pt,cdata_tg_ntx_ven_mtchd$pt)
-colnames(tg_ntx_ven_ac) <- c("air","co2")
-tg_ntx_ven_pca <- deming(tg_ntx_ven_ac[,2]~tg_ntx_ven_ac[,1])
-tg_ntx_ven_flow_change <- 1/tg_ntx_ven_pca$coefficients[2]
-tg_ntx_ven_ci_int <- (tg_ntx_ven_pca$ci[2,2]-tg_ntx_ven_pca$ci[2,1])/2
-tg_ntx_ven_flow_change_ci <- tg_ntx_ven_ci_int*(tg_ntx_ven_flow_change)^2
-tg_ntx_ven_slp_se <- sqrt(diag(tg_ntx_ven_pca$variance))[2]                     # se for slope
-tg_ntx_ven_flow_se <- tg_ntx_ven_slp_se/tg_ntx_ven_pca$coefficients[2]^2        # se for flow change
-tg_ntx_ven_slp_int_se <- sqrt(diag(tg_ntx_ven_pca$variance))[1]                 # se for original slope's intercept
-tg_ntx_ven_flow_int_se <- tg_ntx_ven_slp_int_se/tg_ntx_ven_pca$coefficients[1]^2# se for flow change
-tg_ntx_ven_ac$se_u <- (tg_ntx_ven_pca$coefficients[2]+tg_ntx_ven_slp_se)*tg_ntx_ven_ac$air+tg_ntx_ven_pca$coeff[1]-tg_ntx_slp_int_se
-tg_ntx_ven_ac$se_l <- (tg_ntx_ven_pca$coefficients[2]-tg_ntx_ven_slp_se)*tg_ntx_ven_ac$air+tg_ntx_ven_pca$coeff[1]+tg_ntx_slp_int_se
-tg_ntx_ven_ac$cu <- tg_ntx_ven_pca$ci[2,2]*tg_ntx_ven_ac$air+tg_ntx_ven_pca$ci[1,1]
-tg_ntx_ven_ac$cl <- tg_ntx_ven_pca$ci[2,1]*tg_ntx_ven_ac$air+tg_ntx_ven_pca$ci[1,2]
-tg_ntx_ven_plot <- ggplotRegressionPCA(tg_ntx_ven_ac,5.5,12)
-aa <- tg_ntx_ven_plot+xlim(4,12.5)+ylim(4,12.5)+
-  labs(y=expression(paste("TTP during ",CO[2]," [s]")))+labs(x="TTP during air [s]")+ggtitle("Tg - Venules")+
-  geom_abline(slope=1,intercept=0,colour="black",linetype="dashed")+theme_gray()+
-  theme(axis.text=element_text(size=30,colour="white"),
-        text=element_text(size=30,color="white"),
-        legend.text=element_text(size=30,color="white"),
-        plot.background = element_rect(fill = "gray27"),
-        panel.background = element_rect(fill = "gray42"),
-        legend.background = element_rect(fill = "gray27"),
-        legend.key.height=unit(2.5,"line"))
-aa
-dev.copy(jpeg,"FC_TG_nTX_Venules.jpeg")
-dev.off()
-tg_ntx_ven_flow_change_tab = paste(round(tg_ntx_ven_flow_change,digits=3)," +/- ",round(tg_ntx_ven_flow_se,digits=3))
-# hypothesis testing
-#Paternoster, R., Brame, R., Mazerolle, P., & Piquero, A. R. (1998). Using the Correct Statistical Test for the Equality of Regression Coefficients. Criminology, 36(4), 859???866.
-z_ntx_ven_flow_change = (tg_ntx_ven_pca$coefficient[2]-wt_ntx_ven_pca$coefficient[2])/
-  (sqrt(tg_ntx_ven_slp_se^2+wt_ntx_ven_slp_se^2))
-p_ntx_ven_flow_change=2*pnorm(-abs(z_ntx_ven_flow_change))
-
-wt_ntx_flow_tabs <- data.frame(c(wt_ntx_flow_change_tab,wt_ntx_art_flow_change_tab,wt_ntx_cap_flow_change_tab,wt_ntx_ven_flow_change_tab))
-tg_ntx_flow_tabs <- data.frame(c(tg_ntx_flow_change_tab,tg_ntx_art_flow_change_tab,tg_ntx_cap_flow_change_tab,tg_ntx_ven_flow_change_tab))
-p_values <- data.frame(c(p_ntx_flow_change,p_ntx_art_flow_change,p_ntx_cap_flow_change,p_ntx_ven_flow_change))
-flow_change_tabss <- cbind(wt_ntx_flow_tabs,tg_ntx_flow_tabs,p_values)
-colnames(flow_change_tabss) <- c("nTg Flow Change","Tg Flow Change","p-value")
-rownames(flow_change_tabss) <- c("ALL","Arterioles","Capillaries","Venules")
+flow_change_tabs <- cbind(wt_ntx_flow_tabs,wt_tx_flow_tabs,tg_ntx_flow_tabs,tg_tx_flow_tabs,
+                           p_values_wtVSwtLNAME,p_values_wtVStg,p_values_tgVStgLNAME)
+colnames(flow_change_tabs) <- c("nTg Flow Change","nTg+LNAME Flow Change","Tg Flow Change","Tg+LNAME Flow Change",
+                                 "p-nTgVSnTg+LNAME","p-nTgVSTg","p-TgVSTg+LNAME")
+rownames(flow_change_tabs) <- c("ALL","Arterioles","Capillaries","Venules")
 flow_change_tabs
 
-# % change in flow -> (RFC-1)*100 %
-rfc.df <- data.frame(matrix(ncol=4,nrow=8))
-colnames(rfc.df) <- c("type","gn","rfc","se")
-rfc.df[,3]<-c(wt_ntx_flow_change,tg_ntx_flow_change,wt_ntx_art_flow_change,tg_ntx_art_flow_change,
-              wt_ntx_cap_flow_change,tg_ntx_cap_flow_change,wt_ntx_ven_flow_change,tg_ntx_ven_flow_change)
-rfc.df[,4]<-c(wt_ntx_flow_se,tg_ntx_flow_se,wt_ntx_art_flow_se,tg_ntx_art_flow_se,
-              wt_ntx_cap_flow_se,tg_ntx_cap_flow_se,wt_ntx_ven_flow_se,tg_ntx_ven_flow_se)
+rfc.df <- data.frame(matrix(ncol=4,nrow=16))
+colnames(rfc.df) <- c("type","gntrt","rfc","se")
+rfc.df[,3]<-c(wt_ntx_flow_change$value,wt_tx_flow_change$value,tg_ntx_flow_change$value,tg_tx_flow_change$value,
+              wt_ntx_art_flow_change$value,wt_tx_art_flow_change$value,tg_ntx_art_flow_change$value,tg_tx_art_flow_change$value,
+              wt_ntx_cap_flow_change$value,wt_tx_cap_flow_change$value,tg_ntx_cap_flow_change$value,tg_tx_cap_flow_change$value,
+              wt_ntx_ven_flow_change$value,wt_tx_ven_flow_change$value,tg_ntx_ven_flow_change$value,tg_tx_ven_flow_change$value)
+rfc.df[,4]<-c(wt_ntx_flow_change$SE,wt_tx_flow_change$SE,tg_ntx_flow_change$SE,tg_tx_flow_change$SE,
+              wt_ntx_art_flow_change$SE,wt_tx_art_flow_change$SE,tg_ntx_art_flow_change$SE,tg_tx_art_flow_change$SE,
+              wt_ntx_cap_flow_change$SE,wt_tx_cap_flow_change$SE,tg_ntx_cap_flow_change$SE,tg_tx_cap_flow_change$SE,
+              wt_ntx_ven_flow_change$SE,wt_tx_ven_flow_change$SE,tg_ntx_ven_flow_change$SE,tg_tx_ven_flow_change$SE)
 rfc.df[,4]<-(rfc.df[,4]/rfc.df[,3])*100     # se of % change in flow from co2 challenge
 rfc.df[,3]<-(rfc.df[,3]-1)*100              # % change in flow from co2 challenge
-rfc.df[,1] <- c("All Vessels","All Vessels","Arterioles","Arterioles",
-                "Capillaries","Capillaries","Venules","Venules")
-rfc.df[,2] <- c("nTg","Tg","nTg","Tg","nTg","Tg","nTg","Tg")
-x.seq <- c(2,4,6.5,7.5,9.5,10.5,12.5,13.5)
+rfc.df[,1] <- c("All Vessels","All Vessels","All Vessels","All Vessels",
+                "Arterioles","Arterioles","Arterioles","Arterioles",
+                "Capillaries","Capillaries","Capillaries","Capillaries",
+                "Venules","Venules","Venules","Venules")
+rfc.df[,2] <- c("nTg","nTg+LANME","Tg","Tg+LANME",
+                "nTg","nTg+LANME","Tg","Tg+LANME",
+                "nTg","nTg+LANME","Tg","Tg+LANME",
+                "nTg","nTg+LANME","Tg","Tg+LANME")
+x.seq <- c(1,2,3,4,6,7,8,9,11,12,13,14,16,17,18,19)
 rfc.df$x <- x.seq
-rfc.df$width[rfc.df$type=="All Vessels"] <- 2
+rfc.df$width[rfc.df$type=="All Vessels"] <- 1
 rfc.df$width[rfc.df$type!="All Vessels"] <- 1
+
 perc_change_temp<-ggplot(rfc.df, aes(x=x, y=rfc)) +
-  geom_errorbar(data=subset(rfc.df,rfc>0),aes(fill=gn,ymin=rfc, ymax=rfc+se),
+  geom_errorbar(data=subset(rfc.df,rfc>0),aes(fill=gntrt,ymin=rfc, ymax=rfc+se),
                 size=.7,
                 width=.4,
                 position=position_dodge(0.9))+
-  #   geom_errorbar(data=subset(rfc.df,rfc<0),aes(fill=gn,ymin=rfc, ymax=rfc-se),
-  #                 size=.7,
-  #                 width=.4,
-  #                 position=position_dodge(0.9))+
-  geom_bar(aes(fill=gn, width=width),position=position_dodge(), stat="identity",
+    geom_errorbar(data=subset(rfc.df,rfc<0),aes(fill=gntrt,ymin=rfc, ymax=rfc-se),
+                  size=.7,
+                  width=.4,
+                  position=position_dodge(0.9))+
+  geom_bar(aes(fill=gntrt, width=width),position=position_dodge(), stat="identity",
            color="black",
-           size=1)+ylim(-25,130)+xlab("")+ylab(expression(paste(Delta,"Flow [%]")))+
-  scale_fill_manual(name="Genotype",values=c("olivedrab4","darkorange3"),labels=c("nTg","Tg"))+
+           size=1)+ylim(-25,140)+xlab("")+ylab(expression(paste(Delta,"Flow [%]")))+
+  scale_fill_manual(name="Genotype&Treatment",values=c("olivedrab2","olivedrab4","darkorange","darkorange3"),
+                    labels=c("nTg","nTg+LNAME","Tg","Tg+LNAME"))+
   #   scale_fill_manual(name="Genotype",values=c("white","grey45"),labels=c("nTg","Tg"))+
-  scale_x_continuous(breaks=c(sum(x.seq[1:2])/2, sum(x.seq[3:4])/2, sum(x.seq[5:6])/2, sum(x.seq[7:8])/2),
+  scale_x_continuous(breaks=c(sum(x.seq[1:4])/4, sum(x.seq[5:8])/4, sum(x.seq[9:12])/4, sum(x.seq[13:16])/4),
                      label=c("All Vessels","Arterioles","Capillaries","Venules"))+theme_gray()+
   theme(axis.text=element_text(size=25),
         text=element_text(size=30),
@@ -769,28 +596,41 @@ perc_change_temp<-ggplot(rfc.df, aes(x=x, y=rfc)) +
         legend.key.height=unit(2.5,"line"),
         legend.position="bottom")
 perc_change_temp
-# label1.df <- data.frame(x = c(sum(x.seq[1:2])/2,sum(x.seq[3:4])/2,sum(x.seq[5:6])/2),
-#                         rfc = c(2.25,2.45,2.75))
-# data1 <- data.frame(x = c(2,2,4,4), y = c(2,2.25,2.25,2),
-#                     type=NA, delta_pt=NA)
-# data2 <- data.frame(x = c(6.5,6.5,7.5,7.5), y = c(2.2,2.45,2.45,2.2),
-#                     type=NA, delta_pt=NA)
-# data3 <- data.frame(x = c(9.5,9.5,10.5,10.5), y = c(2.5,2.75,2.75,2.5),
-#                     type=NA, delta_pt=NA)
-label1.df <- data.frame(x = c(sum(x.seq[1:2])/2,sum(x.seq[3:4])/2,sum(x.seq[5:6])/2),
-                        rfc = c(100,115,122))
-data1 <- data.frame(x = c(2,2,4,4), y = c(90,100,100,90),
+
+label1.df <- data.frame(x = c(x.seq[2],x.seq[3],x.seq[6],x.seq[7],x.seq[8],
+                              x.seq[10],x.seq[11],x.seq[14],x.seq[15])-0.1,
+                        rfc = c(95,102,100,107,114,
+                                115,122,80,87))
+data1 <- data.frame(x = c(1,2), y = c(95,95),
                     type=NA, delta_pt=NA)
-data2 <- data.frame(x = c(6.5,6.5,7.5,7.5), y = c(105,115,115,105),
+data2 <- data.frame(x = c(1,3), y = c(102,102),
                     type=NA, delta_pt=NA)
-data3 <- data.frame(x = c(9.5,9.5,10.5,10.5), y = c(112,122,122,112),
+data3 <- data.frame(x = c(6,7), y = c(100,100),
                     type=NA, delta_pt=NA)
-perc_change<-perc_change_temp + geom_path(data = data1, aes(x = x, y = y),size=1.5)+
-  geom_path(data = data2, aes(x = x, y = y),size=1.5)+
-  geom_path(data = data3, aes(x = x, y = y),size=1.5)+
-  geom_text(data=label1.df,label="*",size=18) + theme(legend.position="bottom")
+data4 <- data.frame(x = c(6,8), y = c(107,107),
+                    type=NA, delta_pt=NA)
+data5 <- data.frame(x = c(8,9), y = c(114,114),
+                    type=NA, delta_pt=NA)
+data6 <- data.frame(x = c(11,12), y = c(115,115),
+                    type=NA, delta_pt=NA)
+data7 <- data.frame(x = c(11,13), y = c(122,122),
+                    type=NA, delta_pt=NA)
+data8 <- data.frame(x = c(16,17), y = c(80,80),
+                    type=NA, delta_pt=NA)
+data9 <- data.frame(x = c(16,18), y = c(87,87),
+                    type=NA, delta_pt=NA)
+perc_change<-perc_change_temp + geom_path(data = data1, aes(x = x, y = y),size=1)+
+  geom_path(data = data2, aes(x = x, y = y),size=1)+
+  geom_path(data = data3, aes(x = x, y = y),size=1)+
+  geom_path(data = data4, aes(x = x, y = y),size=1)+
+  geom_path(data = data5, aes(x = x, y = y),size=1)+
+  geom_path(data = data6, aes(x = x, y = y),size=1)+
+  geom_path(data = data7, aes(x = x, y = y),size=1)+
+  geom_path(data = data8, aes(x = x, y = y),size=1)+
+  geom_path(data = data9, aes(x = x, y = y),size=1)+
+  geom_text(data=label1.df,label="*",size=13)
 perc_change
-dev.copy(jpeg,"flow_change/perc_change_flow.jpeg", width=800, height=800)
+dev.copy(jpeg,"LNAME/pec_flow_change_LNAME.jpeg", width=1600, height=800)
 dev.off()
 
 # combining flow change plot ('comb') and percent change plot('perc_change')
@@ -805,5 +645,5 @@ perc_change <- perc_change + theme(legend.position="none")
 blankPlot <- ggplot()+geom_blank(aes(1,1)) + cowplot::theme_nothing()
 top_row <- plot_grid(comb,blankPlot,perc_change, labels=c("A","","B"),label_size=25,ncol=3, rel_widths = c(1,0.1,1))
 plot_grid(top_row, legend, ncol = 1, rel_heights = c(1, 0.1))
-dev.copy(jpeg,"flow_change/airVSco2&perc_change1.jpeg", width=1600, height=800)
+dev.copy(jpeg,"LNAME/airVSco2&perc_change1.jpeg", width=1600, height=900)
 dev.off()
