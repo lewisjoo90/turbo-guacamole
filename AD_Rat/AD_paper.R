@@ -190,14 +190,9 @@ desmin<-ggplot(data=subset(data_summ,stain=="Desmin"),aes(x=x, y=value)) +
         legend.position="none")
 desmin
 label1.df <- data.frame(x = c(x.seq[2]),
-                        value = c(450))
+                        value = c(360))
 Desmin<-desmin+
-#   geom_path(data = data1, aes(x = x, y = y),size=1.5)+
-#   geom_path(data = data2, aes(x = x, y = y),size=1.5)+
-#   geom_path(data = data3, aes(x = x, y = y),size=1.5)+
-#   geom_path(data = data4, aes(x = x, y = y),size=1.5)+
   geom_text(data=label1.df,label="*",size=18)
-#   geom_text(data=label2.df,label="*",size=18)
 Desmin
 asma<-ggplot(data=subset(data_summ,stain=="a-sma"),aes(x=x, y=value)) +
   geom_bar(aes(fill=gn),position=position_dodge(), stat="identity",
@@ -218,16 +213,11 @@ asma<-ggplot(data=subset(data_summ,stain=="a-sma"),aes(x=x, y=value)) +
         legend.position="none")
 asma
 label1.df <- data.frame(x = c(x.seq[2]),
-                        value = c(178))
+                        value = c(157))
 Asma<-asma +
-  #   geom_path(data = data1, aes(x = x, y = y),size=1.5)+
-  #   geom_path(data = data2, aes(x = x, y = y),size=1.5)+
-  #   geom_path(data = data3, aes(x = x, y = y),size=1.5)+
-  #   geom_path(data = data4, aes(x = x, y = y),size=1.5)+
   geom_text(data=label1.df,label="*",size=18)
-#   geom_text(data=label2.df,label="*",size=18)
 Asma
-pdg<-ggplot(data=subset(data_summ,stain=="pdgfrb"),aes(x=x, y=value)) +
+Pdg<-ggplot(data=subset(data_summ,stain=="pdgfrb"),aes(x=x, y=value)) +
   geom_bar(aes(fill=gn),position=position_dodge(), stat="identity",
            color="black",
            size=1.2,width=0.6)+ylim(0,250)+xlab("")+
@@ -244,8 +234,11 @@ pdg<-ggplot(data=subset(data_summ,stain=="pdgfrb"),aes(x=x, y=value)) +
         legend.text=element_text(size=20),
         legend.key.height=unit(2.5,"line"),
         legend.position="none")
-pdg
-Pdg<-pdg
+Pdg
+label1.df <- data.frame(x = c(x.seq[2]),
+                        value = c(192))
+Pdg<-Pdg +
+  geom_text(data=label1.df,label="*",size=18)
 Pdg
 ng2<-ggplot(data=subset(data_summ,stain=="ng2"),aes(x=x, y=value)) +
   geom_bar(aes(fill=gn),position=position_dodge(), stat="identity",
@@ -310,7 +303,7 @@ Gfa
 
 library(png)
 library(grid)
-img <- readPNG("immunoblots.PNG")
+img <- readPNG("immunoblots_draft2.PNG")
 g <- rasterGrob(img, interpolate=TRUE)
 immuno <- qplot(1:10, 1:10, geom="blank") +
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
@@ -326,15 +319,15 @@ immuno_height = 0.5
 stain_width = 0.25
 stain_height = 0.4
 ggdraw()+
-  draw_plot(immuno,0,0.5,immuno_width,immuno_height)+
-  draw_plot(Desmin,0.43,0.55,stain_width,stain_height)+
-  draw_plot(Asma,0.71,0.55,stain_width,stain_height)+
+  draw_plot(immuno,0.05,0.5,immuno_width,immuno_height)+
+  draw_plot(Desmin,0.5,0.55,stain_width,stain_height)+
+  draw_plot(Asma,0.75,0.55,stain_width,stain_height)+
   draw_plot(Pdg,0,0.05,stain_width,stain_height)+
   draw_plot(Ng2,0.25,0.05,stain_width,stain_height)+
   draw_plot(Occ,0.5,0.05,stain_width,stain_height)+
   draw_plot(Gfa,0.75,0.05,stain_width,stain_height)+
-  draw_plot_label(c("A","B","C","D","E","F","G"),c(0,0.43,0.71,0,0.25,0.5,0.75),c(1,1,1,0.5,0.5,0.5,0.5),size=40)
-dev.copy(jpeg,"histo+immuno/FIGURE2-barstest.jpeg", width=1600, height=1600)
+  draw_plot_label(c("A","B","C","D","E","F","G"),c(0,0.5,0.75,0,0.25,0.5,0.75),c(1,1,1,0.5,0.5,0.5,0.5),size=40)
+dev.copy(jpeg,"histo+immuno/FIGURE2-barstest_draft2.jpeg", width=1600, height=1600)
 dev.off()
 
   # barplot change in ttp by genotype for ntx only - ALL bar twice the width of single vessel type 
@@ -472,30 +465,41 @@ airdata_ntx_all_cap <- subset(airdata_ntx_all,type=="c")
 wilcox.test(delta_p_pt~gn,data=airdata_ntx_all_cap)
 airdata_ntx_all_ven <- subset(airdata_ntx_all,type=="v")
 wilcox.test(delta_p_pt~gn,data=airdata_ntx_all_ven)
+# Vascular reactivity by reduced or elongated TTP from co2 challenge
+airdata_ntx_wo_all <- subset(airdata_ntx_all,type!="all")
+length(airdata_ntx_wo_all[airdata_ntx_wo_all$gn=="wt"&airdata_ntx_wo_all$delta_p_pt>0,]$delta_p_pt)
+length(airdata_ntx_wo_all[airdata_ntx_wo_all$gn=="tg"&airdata_ntx_wo_all$delta_p_pt>0,]$delta_p_pt)
+length(airdata_ntx_wo_all[airdata_ntx_wo_all$gn=="wt"&airdata_ntx_wo_all$delta_p_pt<0,]$delta_p_pt)
+length(airdata_ntx_wo_all[airdata_ntx_wo_all$gn=="tg"&airdata_ntx_wo_all$delta_p_pt<0,]$delta_p_pt)
+
+length(airdata_ntx_wo_all[airdata_ntx_wo_all$gn=="wt"&airdata_ntx_wo_all$type=="c"&airdata_ntx_wo_all$delta_p_pt<0,]$delta_p_pt)
+length(airdata_ntx_wo_all[airdata_ntx_wo_all$gn=="tg"&airdata_ntx_wo_all$type=="c"&airdata_ntx_wo_all$delta_p_pt<0,]$delta_p_pt)
 
 
 ## CAA
 # airdata_matched_ntx_caa contains rows with diving vessels that have CAA
 # airdata_matched_ntx_pial contains rows with pial vessels that have CAA
 # airdata_matched_ntx_plaque contain rows of vessels from imaging window that has plaque
-data_matched_ntx <- subset(data_matched,trt=="ntx")
-data_matched_ntx_caa <- data_matched_ntx[complete.cases(data_matched_ntx[,"vessel_caa"]),]
-data_matched_ntx_caa$v_caa_density <- data_matched_ntx_caa$vessel_caa/data_matched_ntx_caa$vessel_area
-data_matched_ntx_caa$p_caa_density <- data_matched_ntx_caa$pial_caa/data_matched_ntx_caa$pial_area
-airdata_matched_ntx_caa <- subset(data_matched_ntx_caa,state=="air")
-cdata_matched_ntx_caa <- subset(data_matched_ntx_caa,state=="co2")
-delta_pt <- (cdata_matched_ntx_caa$pt - airdata_matched_ntx_caa$pt)/airdata_matched_ntx_caa$pt
-delta_slope = (cdata_matched_ntx_caa$slope - airdata_matched_ntx_caa$slope)*100/airdata_matched_ntx_caa$slope
-delta_AUC = (cdata_matched_ntx_caa$AUC - airdata_matched_ntx_caa$AUC)*100/airdata_matched_ntx_caa$AUC
-airdata_matched_ntx_caa$delta_pt <- delta_pt
-airdata_matched_ntx_caa$delta_slope <- delta_slope
-airdata_matched_ntx_caa$delta_AUC <- delta_AUC
-airdata_matched_ntx_caa <- subset(airdata_matched_ntx_caa,v_caa_density<0.72)
-cdata_matched_ntx_caa$delta_pt <- delta_pt
-cdata_matched_ntx_caa$delta_slope <- delta_slope
-cdata_matched_ntx_caa$delta_AUC <- delta_AUC
-cdata_matched_ntx_caa <- subset(cdata_matched_ntx_caa,v_caa_density<0.72)
-data_matched_ntx_caa <- rbind(airdata_matched_ntx_caa,cdata_matched_ntx_caa)
+# data_matched_ntx <- subset(data_matched,trt=="ntx")
+# data_matched_ntx_caa <- data_matched_ntx[complete.cases(data_matched_ntx[,"vessel_caa"]),]
+# data_matched_ntx_caa$v_caa_density <- data_matched_ntx_caa$vessel_caa/data_matched_ntx_caa$vessel_area
+# data_matched_ntx_caa$p_caa_density <- data_matched_ntx_caa$pial_caa/data_matched_ntx_caa$pial_area
+# airdata_matched_ntx_caa <- subset(data_matched_ntx_caa,state=="air")
+# cdata_matched_ntx_caa <- subset(data_matched_ntx_caa,state=="co2")
+# delta_pt <- (airdata_matched_ntx_caa$pt - cdata_matched_ntx_caa$pt)/airdata_matched_ntx_caa$pt
+# delta_p_pt <- (airdata_matched_ntx_caa$pt - cdata_matched_ntx_caa$pt)/airdata_matched_ntx_tg$pt*100
+# delta_slope = (airdata_matched_ntx_caa$slope - cdata_matched_ntx_caa$slope)*100/airdata_matched_ntx_caa$slope
+# delta_AUC = (airdata_matched_ntx_caa$AUC - cdata_matched_ntx_caa$AUC)*100/airdata_matched_ntx_caa$AUC
+# airdata_matched_ntx_caa$delta_pt <- delta_pt
+# airdata_matched_ntx_caa$delta_p_pt <- delta_p_pt
+# airdata_matched_ntx_caa$delta_slope <- delta_slope
+# airdata_matched_ntx_caa$delta_AUC <- delta_AUC
+# airdata_matched_ntx_caa <- subset(airdata_matched_ntx_caa,v_caa_density<0.72)
+# cdata_matched_ntx_caa$delta_pt <- delta_pt
+# cdata_matched_ntx_caa$delta_slope <- delta_slope
+# cdata_matched_ntx_caa$delta_AUC <- delta_AUC
+# cdata_matched_ntx_caa <- subset(cdata_matched_ntx_caa,v_caa_density<0.72)
+# data_matched_ntx_caa <- rbind(airdata_matched_ntx_caa,cdata_matched_ntx_caa)
 
 data_matched_ntx_tg <- subset(data_matched_ntx,gn=="tg"&type!="c")
 data_matched_ntx_tg$v_caa_density <- data_matched_ntx_tg$vessel_caa/data_matched_ntx_tg$vessel_area
